@@ -1,0 +1,21 @@
+config:
+  target: http://localhost:80
+  phases:
+    - name: "Test"
+      duration: 5s
+      arrivalRate: 4
+  variables:
+    email: "jose@gmail.com"
+    password: "123456789A*"
+  plugins:
+    expect: {}
+scenarios:
+  - flow:
+    - post: 
+        url: "/auth/login"
+        json: 
+          email: "{{ email }}"
+          password: "{{ password }}"
+        expect:
+          - statusCode: [200, 429]
+

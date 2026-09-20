@@ -1,0 +1,40 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model refreshtokens {
+  refreshtokenid Int       @id @default(autoincrement())
+  userid         Int
+  token          String    @db.VarChar(2048)
+  createdat      DateTime? @default(now()) @db.Timestamp(6)
+  expiresat      DateTime? @db.Timestamptz
+  active         Int?      @default(1) @db.SmallInt
+  users          users     @relation(fields: [userid], references: [userid], onDelete: NoAction, onUpdate: NoAction, map: "fk_users_userid")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model users {
+  userid                  Int             @id @default(autoincrement())
+  email                   String          @unique @db.VarChar(80)
+  password                String          @db.VarChar(70)
+  role                    roletype        @default(applicant)
+  passwordrecoverytoken   String?         @db.VarChar(2048)
+  passwordrecoveryexpires DateTime?       @db.Timestamptz
+  active                  Int?            @default(1) @db.SmallInt
+  createdat               DateTime?       @default(now()) @db.Timestamp(6)
+  updatedat               DateTime?       @default(now()) @db.Timestamp(6)
+  refreshtokens           refreshtokens[]
+}
+
+enum roletype {
+  admin
+  applicant
+  investor
+}

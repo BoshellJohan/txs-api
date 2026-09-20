@@ -1,0 +1,13 @@
+node_modules/
+
+# Las variables de entorno quedan fuera del control de versiones
+.env
+env.d.ts
+
+# Cliente de Prisma, se regenera con `npx prisma generate`
+/src/generated/prisma
+
+# Configuracion local de asistentes
+.agents
+.claude
+.windsurf

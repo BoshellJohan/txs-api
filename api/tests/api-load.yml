@@ -1,0 +1,52 @@
+config:
+  target: http://localhost:80
+  processor: "./processor.cjs"
+  phases:
+    - duration: 10
+      arrivalRate: 2
+      name: Low
+    # - duration: 20
+    #   arrivalRate: 6
+    #   name: Medium
+    # - duration: 20
+    #   arrivalRate: 10
+    #   name: High
+    # - duration: 10
+    #   arrivalRate: 20
+    #   name: Stress
+  plugins:
+    expect: {}
+    ensure: 
+      thresholds:
+        - "http.response_time.p99": 400
+      conditions:
+        - expression: "vusers.created > 10 and vusers.failed / vusers.created <= 0.01"
+scenarios:
+  - beforeScenario: "generateUser" 
+    flow: 
+      - post:
+          url: "/users/register"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          expect:
+            - statusCode: 201
+      - post:
+          url: "/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            json: "$.data.accessToken"
+            as: "accessToken"
+          expect:
+            - statusCode: 200
+            - contentType: "json"
+            - hasProperty: "data"
+      - get: 
+          url: "/users/me"
+          headers:
+            Authorization: "Bearer {{accessToken}}"
+          expect:
+            - statusCode: 200
+
