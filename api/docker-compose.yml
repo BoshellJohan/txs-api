@@ -7,6 +7,19 @@ services:
       - "4317:4317"
       - "4318:4318"
     restart: unless-stopped
+  
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
 
   backend1:
     build: .
@@ -20,6 +33,9 @@ services:
     env_file: ./.env
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
   backend2:
@@ -34,6 +50,9 @@ services:
     env_file: ./.env
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
   backend3:
@@ -48,6 +67,9 @@ services:
     env_file: ./.env
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
   nginx: 
