@@ -1,6 +1,7 @@
 import jwt, { SignOptions, VerifyOptions } from 'jsonwebtoken';
 import { UserType } from '../modules/users/types/users.type.js';
 import { IJwtPayload, IJwtRefreshPayload } from '../types/jwt.type.js';
+import { env } from '../config/env.js';
 
 class JwtUtils {
     generateAccessToken(user: UserType){
@@ -10,10 +11,10 @@ class JwtUtils {
             role: user.role
         }
 
-        const secret = process.env.JWT_ACCESS!;
+        const secret = env.JWT_ACCESS!;
 
         const options: SignOptions = {
-            expiresIn: process.env.ACCESS_TOKEN_EXPIRATION as SignOptions['expiresIn']
+            expiresIn: env.ACCESS_TOKEN_EXPIRATION as SignOptions['expiresIn']
         }
         return jwt.sign(payload, secret, options);
     }
@@ -24,17 +25,17 @@ class JwtUtils {
             email: user.email
         }
 
-        const secret = process.env.JWT_REFRESH!;
+        const secret = env.JWT_REFRESH!;
 
         const options: SignOptions = {
-            expiresIn: process.env.REFRESH_TOKEN_EXPIRATION as SignOptions['expiresIn']
+            expiresIn: env.REFRESH_TOKEN_EXPIRATION as SignOptions['expiresIn']
         }
         
         return jwt.sign(payload, secret, options);
     }
 
     verifyJwtToken(token: string){
-        const secret = process.env.JWT_REFRESH!;
+        const secret = env.JWT_REFRESH!;
         return jwt.verify(token, secret);
     }
 }

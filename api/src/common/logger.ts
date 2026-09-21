@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { trace } from '@opentelemetry/api';
 import pino, { Logger } from 'pino';
+import { env } from '../config/env.js';
 
 // Se evalua en cada llamada al logger, no al crearlo, asi que toma el span que
 // este activo en ese momento y no el que hubiera al abrir la peticion.
@@ -13,7 +14,7 @@ function traceContext() {
 }
 
 export const logger = pino({
-    level: process.env.LOG_LEVEL ?? 'info', // silent, trace, debug, info, warn, error, fatal
+    level: env.LOG_LEVEL, // silent, trace, debug, info, warn, error, fatal
     timestamp: pino.stdTimeFunctions.isoTime,
     formatters: {
         level(label){

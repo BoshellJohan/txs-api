@@ -2,9 +2,10 @@ import { SpanStatusCode } from "@opentelemetry/api";
 import { tracer } from "../../common/tracer.js";
 import { transporter } from "./mail.config.js";
 import { resetPasswordTemplate } from "./templates/resetPassword.js";
+import { env } from "../../config/env.js";
 
 export async function sendPasswordResetEmail(email: string, token: string): Promise<void>{
-    const link = `${process.env.FRONT_URL}/reset-password?token=${token}`;
+    const link = `${env.FRONT_URL}/reset-password?token=${token}`;
 
     return tracer.startActiveSpan('mail.sendResetPasswordMail', async (span) => {
         try {
