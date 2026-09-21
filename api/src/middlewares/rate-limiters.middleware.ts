@@ -1,4 +1,6 @@
 import { ipKeyGenerator, rateLimit } from 'express-rate-limit';
+import { RedisStore } from 'rate-limit-redis';
+import { client } from '../common/redis.js';
 
 /* 
     Limitador para registro
@@ -9,13 +11,14 @@ import { ipKeyGenerator, rateLimit } from 'express-rate-limit';
 export const registerLimiter = rateLimit({
     windowMs: 60 * 60 * 1000,
     max: 3,
+    store: new RedisStore({
+        sendCommand: (...args: string []) => client.sendCommand(args),
+        prefix: 'rl:register:',
+    }),
     message: 'Too many registration attempts. Please try again later.',
     statusCode: 429,
     standardHeaders: true,
     legacyHeaders: false,
-    skip: (req) => {
-        return req.user?.role === 'admin';
-    },
     keyGenerator: (req) => {
         return ipKeyGenerator(req.ip || req.socket.remoteAddress || 'unknown');
     },
@@ -37,12 +40,13 @@ export const registerLimiter = rateLimit({
 export const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 5,
+    store: new RedisStore({
+        sendCommand: (...args: string[]) => client.sendCommand(args),
+        prefix: 'rl:login:',
+    }),
     message: 'Too many login attempts. Please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
-    skip: (req) => {
-        return req.user?.role === 'admin';
-    },
     keyGenerator: (req) => {
         return ipKeyGenerator(req.ip || req.socket.remoteAddress || 'unknown');
     },
@@ -64,12 +68,13 @@ export const loginLimiter = rateLimit({
 export const forgotPasswordLimiter = rateLimit({
     windowMs: 30 * 60 * 1000,
     max: 3,
+    store: new RedisStore({
+        sendCommand: (...args: string[]) => client.sendCommand(args),
+        prefix: 'rl:forgot-password:',
+    }),
     message: 'Too many password recovery attempts. Please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
-    skip: (req) => {
-        return req.user?.role === 'admin';
-    },
     keyGenerator: (req) => {
         return ipKeyGenerator(req.ip || req.socket.remoteAddress || 'unknown');
     },

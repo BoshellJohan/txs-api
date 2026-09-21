@@ -1,0 +1,104 @@
+name: Run Tests
+
+on: 
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://txs_app:txs_app_1234@localhost:5432/txs?schema=public
+      # Valores de relleno: los tests no firman contra un emisor real ni
+      # envian correo, pero la aplicacion exige estas variables al arrancar
+      JWT_ACCESS: test_access_secret
+      JWT_REFRESH: test_refresh_secret
+      ACCESS_TOKEN_EXPIRATION: 10m
+      REFRESH_TOKEN_EXPIRATION: 8h
+      FRONT_URL: http://localhost:4200
+      EMAIL_USER: tests@example.com
+      EMAIL_PASSWORD: tests
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: txs_app
+          POSTGRES_PASSWORD: txs_app_1234
+          POSTGRES_DB: txs
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npx prisma migrate deploy
+      - run: npx prisma generate
+      - run: npm test
+  load-test:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://txs_app:txs_app_1234@localhost:5432/txs?schema=public
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: txs_app
+          POSTGRES_PASSWORD: txs_app_1234
+          POSTGRES_DB: txs
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npx prisma migrate deploy
+      - run: npx prisma generate
+      - name: Obtener variables de entorno
+        run: |
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          echo "ACCESS_TOKEN_EXPIRATION=10m" >> .env
+          echo "REFRESH_TOKEN_EXPIRATION=8h" >> .env
+          echo "JWT_ACCESS=${{ secrets.JWT_ACCESS }}" >> .env
+          echo "JWT_REFRESH=${{ secrets.JWT_REFRESH }}" >> .env
+          echo "LOG_LEVEL=info" >> .env
+          echo "OTEL_SERVICE_NAME=txs-api" >> .env
+          echo "OTEL_SERVICE_VERSION=1.0.0" >> .env
+          echo "OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318" >> .env
+          echo "OTEL_TRACES_EXPORTER=otlp" >> .env
+          echo "FRONT_URL=http://localhost:4200" >> .env
+          echo "EMAIL_USER=${{ secrets.EMAIL_USER }}" >> .env
+          echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> .env
+          echo "PORT=3000" >> .env
+          echo "REDIS_URL=redis://redis:6379" >> .env
+      - name: Levantar contenedores
+        run: docker compose up --build -d --wait
+      - name: Correr prueba de carga
+        run: npm run test:load
+      - name: Apagar contenedores
+        if: always()
+        run: docker compose down -v
