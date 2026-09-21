@@ -1,4 +1,5 @@
 import jwt, { SignOptions } from "jsonwebtoken";
+import { env } from "../../config/env.js";
 
 export type UserType = {
     userid: number;
@@ -21,7 +22,7 @@ export function generateRefreshToken(user: UserType, expiresIn: string = '15m'){
         role: user.role
     }
 
-    const secret = process.env.JWT_REFRESH!;
+    const secret = env.JWT_REFRESH!;
 
     const options: SignOptions = {
         expiresIn: expiresIn as SignOptions['expiresIn']

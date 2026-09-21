@@ -21,6 +21,13 @@ jobs:
       FRONT_URL: http://localhost:4200
       EMAIL_USER: tests@example.com
       EMAIL_PASSWORD: tests
+      LOG_LEVEL: silent
+      OTEL_SERVICE_NAME: txs-api
+      OTEL_SERVICE_VERSION: 1.0.0
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://host.docker.internal:4318
+      OTEL_TRACES_EXPORTER: otlp
+      REDIS_URL: redis://localhost:6379
+      PORT: 3000
     services:
       postgres:
         image: postgres:16
