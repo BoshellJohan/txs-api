@@ -1,9 +1,10 @@
-import 'dotenv/config';
 import { getLogger, logger } from './common/logger.js';
 import { client, connect } from './common/redis.js';
 import { prisma } from './infrastructure/database/prisma/prisma.client.js';
+import { sdk } from './instrumentation.js';
+import { env } from './config/env.js';
 
-const PORT = process.env.PORT ?? 3000;
+const PORT = env.PORT ?? 3000;
 
 await connect(); //Redis
 
@@ -31,8 +32,15 @@ const gracefulShutdown = (signal: string) => {
         ];
 
         const results = await Promise.allSettled(closures.map(c => c.promise));
-        
+      
         let hasFailures = false;
+
+        try {
+            await sdk.shutdown();
+        } catch (err){
+            hasFailures = true;
+            getLogger().error({err}, 'failed to close OpenTelemetry SDK');
+        }
 
         results.forEach((result, i) => {
             if(result.status === 'rejected'){

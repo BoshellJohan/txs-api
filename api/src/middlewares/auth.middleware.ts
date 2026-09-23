@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { isJWTPayload } from '../utils/jwt.js';
 import { UnauthorizedError } from '../common/errors/UnauthorizedError.js';
+import { env } from '../config/env.js';
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers['authorization'];
@@ -11,7 +12,7 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
 
     let decoded;
     try {
-        decoded = jwt.verify(token, process.env.JWT_ACCESS as string);
+        decoded = jwt.verify(token, env.JWT_ACCESS as string);
     } catch (err) {
         throw new UnauthorizedError('Invalid or expired token');
     }
